@@ -45,7 +45,7 @@ import java.util.Map;
 
 public class Test extends Activity {
 
-
+//我是註解!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     public static boolean mbIsInitialised;
     // 用來記錄是否MediaPlayer物件需要執行prepareAsync()
 
