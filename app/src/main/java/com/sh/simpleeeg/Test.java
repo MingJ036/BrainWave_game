@@ -4,26 +4,29 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Bundle;
-import androidx.constraintlayout.widget.Guideline;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.constraintlayout.widget.Guideline;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -34,27 +37,28 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
-//import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.RequestOptions;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+//import com.bumptech.glide.request.Request;
 
 public class Test extends Activity {
 
-//我是註解!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     public static boolean mbIsInitialised;
     // 用來記錄是否MediaPlayer物件需要執行prepareAsync()
 
-    TextView txtList,txtData,tvAttention,tvMeditation;
+    TextView txtList,txtData,tvAttention,tvMeditation,tvTime;
     private static final String DB_FILE = "sample.db", DB_FILE2 = "sample2.db",
             DB_TABLE = "sample", DB_TABLE2 = "sample2" , DB_TABLE_ID = "sample3";
     private DBHelper mySampleDbOpenHelper,mySampleDbOpenHelper2,searchID;
     private LinearLayout mLinLay;
-    private ImageView imgGhost;
+    private ImageView imgGhost,imgAudience;
+    private Dialog mDlgNext;
     RadioGroup rgSaveMethod;
     RadioButton rbSQLite, rbExcel, rbCloud;
 
@@ -82,9 +86,14 @@ public class Test extends Activity {
     private Handler m_clockHandler = new Handler();
     boolean bThreadRun = false;
     int iCountDownTimer = 100;
+    static int count = 11;//倒數計時及間
+    static int level = 1;
     RequestOptions myGdiOptions = new RequestOptions().fitCenter();
 
     static double dX = 0;
+    static List<Integer> listRawData = new ArrayList<Integer>();
+
+
 
     @SuppressLint({"SourceLockedOrientationActivity", "ResourceType"})
     @Override
@@ -95,7 +104,6 @@ public class Test extends Activity {
         setContentView(R.layout.test);
 
 
-
         ivStartTest = findViewById(R.id.ivStartTest);
         rbSQLite = findViewById(R.id.rbSQLite);
         rbExcel = findViewById(R.id.rbExcel);
@@ -104,21 +112,18 @@ public class Test extends Activity {
         mContext = this;
 
 
-
-        ivBG = (ImageView)findViewById(R.id.ivBG);
-        ivStopTest = (ImageView)findViewById(R.id.ivStopTest);
-        layoutChart = (LinearLayout)findViewById(R.id.layoutChart);
-        LCFatigue =(LinearLayout)findViewById(R.id.LCFatigue);
+        ivBG = (ImageView) findViewById(R.id.ivBG);
+        ivStopTest = (ImageView) findViewById(R.id.ivStopTest);
+        layoutChart = (LinearLayout) findViewById(R.id.layoutChart);
+        LCFatigue = (LinearLayout) findViewById(R.id.LCFatigue);
         tvAttention = (TextView) findViewById(R.id.tvAttention);
         tvMeditation = (TextView) findViewById(R.id.tvMeditation);
         guidelineTop = findViewById(R.id.guideline23);
         guidelineBottom = findViewById(R.id.guideline24);
-        imgGhost = (ImageView)findViewById(R.id.imgGhost);
-
-
+        imgGhost = (ImageView) findViewById(R.id.imgGhost);
+        imgAudience = (ImageView) findViewById(R.id.imgAudience);
 
 //建立資料表-----------------------------------------------------------------------------------------
-
 
 
         mContext = this;
@@ -126,6 +131,7 @@ public class Test extends Activity {
 
         txtList = (TextView) findViewById(R.id.txtList);
         txtData = (TextView) findViewById(R.id.txtData);
+        tvTime = (TextView) findViewById(R.id.tvTime);
         //chartPreMed = (PieChart) findViewById(R.id.pieChartMed);
 
 
@@ -137,26 +143,34 @@ public class Test extends Activity {
         clsData.DoRawCalculation();
 
 
+        final Handler handler = new Handler();
 
-
-
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable()
-        {
+        handler.postDelayed(new Runnable()  {
             @Override
-            public void run()
-            {
-
+            public void run() {
+                //System.out.println(count);
+                if (count > 0) {
+                    tvTime.setText(Integer.toString(count-1)+"");
+                    handler.postDelayed(this, 1000);
+                    count--;
+                }else{
+                    count = 11;
+                    bThreadRun = false;
+                    mDlgNext = new Dialog(Test.this);
+                    mDlgNext.setCancelable(false);
+                    mDlgNext.setContentView(R.layout.dlg_next);
+                    Button loginBtnNext = mDlgNext.findViewById(R.id.btnNext);
+                    loginBtnNext.setOnClickListener(loginDlgBtnNextOnClick);
+                    mDlgNext.show();
+                }
                 //Bitmap bmpScreenshot = clsData.TakeScreenShotFromView(layout0);
                 //clsData.CreatePdf(context, bmpScreenshot);
+
             }
-        }, 2000);
+        },1000);
+
+
         //-----------------------------------------------------------------------------------------
-
-
-
-
-
 
 
         m_clockThread1000 = new ClockThread1000();
@@ -168,6 +182,26 @@ public class Test extends Activity {
         SetCallback();
 
     }
+
+
+    private final View.OnClickListener loginDlgBtnNextOnClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Toast.makeText(Test.this, "下一關", Toast.LENGTH_LONG).show();
+            level+=1;
+            setMusic();
+            mDlgNext.dismiss();
+
+        }
+    };
+
+
+
+    void setMusic(){
+        music.play(this, R.raw.calm01);
+    }
+
+
     @Override
     protected void onStart()
     {
@@ -209,6 +243,7 @@ public class Test extends Activity {
     protected void onPause() {
         super.onPause();
         music.stop(this);
+
     }
 
     @Override
@@ -341,8 +376,8 @@ public class Test extends Activity {
     Handler m_processMessageHandler = new Handler()
     {
 
-        float set1=1500;
-        float set2=1500;
+        float set1=1600;
+        float set2=1600;
 
 
         @SuppressLint({"HandlerLeak", "ResourceType"})
@@ -380,42 +415,90 @@ public class Test extends Activity {
                 Bundle bundle = getIntent().getExtras();
                 String CheckRB = bundle.getString("CheckRB");
                 float fCheckRB = Float.parseFloat(CheckRB);
+                AnimatorSet animTxtMove = new AnimatorSet();
+                float point1=set1, point2=set2;
+                ObjectAnimator animTxtAlpha;
+                ObjectAnimator animTxtAlpha2;
 
 //動畫========================================================================================================
-                float point1=set1, point2=set2;
-                   //-----圖片重製-----
-                ObjectAnimator animTxtAlpha = ObjectAnimator.ofFloat(imgGhost, "alpha", 1, (float) 0.3);
-                animTxtAlpha.setDuration(500);
-                animTxtAlpha.setRepeatCount(-1);
-                animTxtAlpha.setRepeatMode(ObjectAnimator.REVERSE);
-                animTxtAlpha.setInterpolator(new LinearInterpolator());
-                animTxtAlpha.start();
+                switch (level) {
+                    case 1 : //等級1=====
+                        //-----圖片重製-----
+                        animTxtAlpha = ObjectAnimator.ofFloat(imgGhost, "alpha", 1, (float)0.3);
+                        animTxtAlpha2 = ObjectAnimator.ofFloat(imgAudience, "alpha", 0, 0);
+                        animTxtAlpha.setDuration(500);
+                        animTxtAlpha.setRepeatCount(-1);
+                        animTxtAlpha.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha2.setDuration(500);
+                        animTxtAlpha2.setRepeatCount(-1);
+                        animTxtAlpha2.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha2.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha.start();
+                        animTxtAlpha2.start();
 
-                ObjectAnimator animTxtMove1 =
-                        ObjectAnimator.ofFloat(imgGhost, "y", point1, point2);
-                animTxtMove1.setDuration(900);
-                animTxtMove1.setInterpolator(new AccelerateDecelerateInterpolator());
 
-                AnimatorSet animTxtMove = new AnimatorSet();
-                animTxtMove.playSequentially(animTxtMove1);
-                animTxtMove.start();
+                        ObjectAnimator animTxtMove1 =
+                                ObjectAnimator.ofFloat(imgGhost, "y", point1, point2);
+                        animTxtMove1.setDuration(900);
+                        animTxtMove1.setInterpolator(new AccelerateDecelerateInterpolator());
+
+
+                        animTxtMove.playSequentially(animTxtMove1);
+                        animTxtMove.start();
+                        break;
+                case 2 :  //等級2=====
+                        imgGhost.setAlpha(0f);
+                        animTxtAlpha = ObjectAnimator.ofFloat(imgGhost, "alpha",0,0);
+                        animTxtAlpha2 = ObjectAnimator.ofFloat(imgAudience, "alpha", 1, 1);
+                        animTxtAlpha.setDuration(500);
+                        animTxtAlpha.setRepeatCount(-1);
+                        animTxtAlpha.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha2.setDuration(500);
+                        animTxtAlpha2.setRepeatCount(-1);
+                        animTxtAlpha2.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha2.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha.start();
+                        animTxtAlpha2.start();
+
+                        ObjectAnimator animTxtMove2 =
+                                ObjectAnimator.ofFloat(imgAudience, "y", point1, point2);
+                        animTxtMove2.setDuration(900);
+                        animTxtMove2.setInterpolator(new AccelerateDecelerateInterpolator());
+
+                        animTxtMove.playSequentially(animTxtMove2);
+                        animTxtMove.start();
+                    break;
+                }
                 //=============================================================================
 
                 if (clsLineChart == null)
                     return;
+
+                set1 = set2;  //使動畫較順
+
+                //=======關卡難度=======
+                switch (level) {
+                    case 1 : //等級1=====
+                        if (clsData.iGetAttention() <= 30) {
+                            set2 = 700;  //==靠近
+                        } else {
+                            set2 = 700 + clsData.iGetAttention() * 9;  //==遠離
+                        }
+                        break;
+                    case 2 :  //等級2=====
+                        if (clsData.iGetMeditation() <= 60) {
+                            set2 = 700 + clsData.iGetMeditation() * 9;  //==遠離
+                        } else {
+                            set2 = 700;  //==靠近
+                        }
+                        break;
+                }
+
                 //專注值===============
                 clsLineChart.AddPoint(1, dX, clsData.iGetAttention());
                 tvAttention.setText(String.valueOf(clsData.iGetAttention()));
-
-                set1 = set2;
-                if(clsData.iGetAttention()<=30){    //-----關卡難度-----
-                    set2 = 700;
-                }
-                else{
-                    set2 = 700+clsData.iGetAttention()*9;
-                }
-
-
                 //放鬆值==============
                 clsLineChart.AddPoint(2, dX, clsData.iGetMeditation());
                 tvMeditation.setText(String.valueOf(clsData.iGetMeditation()));
