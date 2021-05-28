@@ -21,6 +21,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -43,6 +44,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 //import com.bumptech.glide.request.Request;
 
@@ -86,6 +89,10 @@ public class Test extends Activity {
     private Handler m_clockHandler = new Handler();
     boolean bThreadRun = false;
     int iCountDownTimer = 100;
+    private int progress = 11;
+    private ProgressBar pb;
+    private Timer timer;
+    private TimerTask timerTask;
     static int count = 11;//倒數計時及間
     static int level = 1;
     RequestOptions myGdiOptions = new RequestOptions().fitCenter();
@@ -133,10 +140,15 @@ public class Test extends Activity {
         txtData = (TextView) findViewById(R.id.txtData);
         tvTime = (TextView) findViewById(R.id.tvTime);
         //chartPreMed = (PieChart) findViewById(R.id.pieChartMed);
+        pb = (ProgressBar) findViewById(R.id.progressBar);
 
 
         float fSize = 10f;
 
+        //设置进度条的最大数值
+        pb.setMax(10);
+        //一开始进度条的进度是0
+        pb.setProgress(0);
 
 
 
@@ -144,30 +156,22 @@ public class Test extends Activity {
 
 
         final Handler handler = new Handler();
-
-        handler.postDelayed(new Runnable()  {
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                //System.out.println(count);
-                if (count > 0) {
-                    tvTime.setText(Integer.toString(count-1)+"");
-                    handler.postDelayed(this, 1000);
-                    count--;
-                }else{
-                    count = 11;
-                    bThreadRun = false;
-                    mDlgNext = new Dialog(Test.this);
-                    mDlgNext.setCancelable(false);
-                    mDlgNext.setContentView(R.layout.dlg_next);
-                    Button loginBtnNext = mDlgNext.findViewById(R.id.btnNext);
-                    loginBtnNext.setOnClickListener(loginDlgBtnNextOnClick);
-                    mDlgNext.show();
-                }
-                //Bitmap bmpScreenshot = clsData.TakeScreenShotFromView(layout0);
-                //clsData.CreatePdf(context, bmpScreenshot);
+
+
+                mDlgNext = new Dialog(Test.this);
+                mDlgNext.setCancelable(false);
+                mDlgNext.setContentView(R.layout.dlg_next);
+                Button loginBtnNext = mDlgNext.findViewById(R.id.btnNext);
+                loginBtnNext.setOnClickListener(loginDlgBtnNextOnClick);
+                mDlgNext.show();
 
             }
-        },1000);
+
+        }, 11000);
+
 
 
         //-----------------------------------------------------------------------------------------
@@ -184,16 +188,9 @@ public class Test extends Activity {
     }
 
 
-    private final View.OnClickListener loginDlgBtnNextOnClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            Toast.makeText(Test.this, "下一關", Toast.LENGTH_LONG).show();
-            level+=1;
-            setMusic();
-            mDlgNext.dismiss();
 
-        }
-    };
+
+
 
 
 
@@ -236,12 +233,14 @@ public class Test extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        StartTimer();
         music.play(this, R.raw.classic04);
 
     }
     @Override
     protected void onPause() {
         super.onPause();
+        EndTimer();
         music.stop(this);
 
     }
@@ -285,6 +284,61 @@ public class Test extends Activity {
         startActivity(intent);
     }
     //==============================================================================================
+    Handler handler = new Handler()
+    {
+        public void handleMessage(android.os.Message msg) {
+            if(msg.what==0) //如果消息是刚才发送的标识
+            {
+                tvTime.setText(Integer.toString(progress));
+            }
+        };
+    };
+
+    public void StartTimer() {
+        //如果timer和timerTask已经被置null了
+        if (timer == null&&timerTask==null) {
+            //新建timer和timerTask
+            timer = new Timer();
+            timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    //每次progress加一
+                    progress--;
+                    handler.sendEmptyMessage(0);
+                    //如果进度条满了的话就再置0，实现循环
+                    if (progress <= 0) {
+                        progress = 0;
+                    }
+                    //设置进度条进度
+                    pb.setProgress(progress);
+                }
+            };
+            /*开始执行timer,第一个参数是要执行的任务，
+            第二个参数是开始的延迟时间（单位毫秒）或者是Date类型的日期，代表开始执行时的系统时间
+            第三个参数是计时器两次计时之间的间隔（单位毫秒）*/
+            timer.schedule(timerTask, 1000, 1000);
+        }
+    }
+
+
+    public void EndTimer()
+    {
+        timer.cancel();
+        timerTask.cancel();
+        timer=null;
+        timerTask=null;
+    }
+    private final View.OnClickListener loginDlgBtnNextOnClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            //Toast.makeText(Test.this, "下一關", Toast.LENGTH_LONG).show();
+            progress = 11;
+            level+=1;
+            setMusic();
+            mDlgNext.dismiss();
+
+        }
+    };
     //==============================================================================================
     //==============================================================================================
     public void SetCallback()
