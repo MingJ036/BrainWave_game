@@ -65,6 +65,8 @@ public class CLS_DATA
     static boolean bfNeuroskyConnected = false;
     static boolean bfTestReady = false;
     static boolean bSendDataOk = false;
+    public String SetLD = "";
+
 
     static int iBWTestModel = 0;
     static int iBVRTestModel = 0;
@@ -167,6 +169,7 @@ public class CLS_DATA
     {
         double _dTheta = 0, _dDelta = 0, _dLowAlpha = 0, _dHighAlpha = 0, _dLowBeta = 0, _dHighBeta = 0;
         double _dLowGamma = 0, _dHighGamma = 0;
+        String LoadingData = SetLD;
         iGoodSignal = _iGoodSignal;
         iAttention = _iAtt;
         iMeditation = _iMed;
@@ -194,19 +197,39 @@ public class CLS_DATA
         bfNeuroskyConnected = true;//有設定代表有收到腦波資料
 
         CLS_RAWDATA _raw = new CLS_RAWDATA();
-        _raw.iGoodSignal = iGoodSignal;
-        _raw.iTheta = iTheta;
-        _raw.iDelta = iDelta;
-        _raw.iLowAlpha = iLowAlpha;
-        _raw.iHighAlpha = iHighAlpha;
-        _raw.iLowBeta = iLowBeta;
-        _raw.iHighBeta = iHighBeta;
-        _raw.iLowGamma = iLowGamma;
-        _raw.iHighGamma = iHighGamma;
-        _raw.iAttention = iAttention;
-        _raw.iMeditation = iMeditation;
-        _raw.iFatigue = iFatigue;
-        listRawData.add(_raw);
+        switch (LoadingData){
+            case "True":
+                _raw.iGoodSignal = iGoodSignal;
+                _raw.iTheta = -1;
+                _raw.iDelta = -1;
+                _raw.iLowAlpha = -1;
+                _raw.iHighAlpha = -1;
+                _raw.iLowBeta = -1;
+                _raw.iHighBeta = -1;
+                _raw.iLowGamma = -1;
+                _raw.iHighGamma = -1;
+                _raw.iAttention = -1;
+                _raw.iMeditation = -1;
+                _raw.iFatigue = -1;
+                listRawData.add(_raw);
+                break;
+
+            case "False":
+                _raw.iGoodSignal = iGoodSignal;
+                _raw.iTheta = iTheta;
+                _raw.iDelta = iDelta;
+                _raw.iLowAlpha = iLowAlpha;
+                _raw.iHighAlpha = iHighAlpha;
+                _raw.iLowBeta = iLowBeta;
+                _raw.iHighBeta = iHighBeta;
+                _raw.iLowGamma = iLowGamma;
+                _raw.iHighGamma = iHighGamma;
+                _raw.iAttention = iAttention;
+                _raw.iMeditation = iMeditation;
+                _raw.iFatigue = iFatigue;
+                listRawData.add(_raw);
+                break;
+        }
     }
     //==============================================================================================
     public String strGetSendingData()
@@ -964,6 +987,7 @@ public class CLS_DATA
             _cell = _r[ii].createCell(8);    _cell.setCellValue(listRawData.get(ii-5).iHighBeta);
             _cell = _r[ii].createCell(9);    _cell.setCellValue(listRawData.get(ii-5).iLowGamma);
             _cell = _r[ii].createCell(10);    _cell.setCellValue(listRawData.get(ii-5).iHighGamma);
+
         }
 
 

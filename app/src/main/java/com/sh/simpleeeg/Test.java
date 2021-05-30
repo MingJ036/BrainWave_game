@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -27,6 +28,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.constraintlayout.widget.Guideline;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -40,12 +42,23 @@ import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static com.sh.simpleeeg.CLS_BrainWave.iAttention;
+import static com.sh.simpleeeg.CLS_BrainWave.iDelta;
+import static com.sh.simpleeeg.CLS_BrainWave.iFatigue;
+import static com.sh.simpleeeg.CLS_BrainWave.iGoodSignal;
+import static com.sh.simpleeeg.CLS_BrainWave.iHighAlpha;
+import static com.sh.simpleeeg.CLS_BrainWave.iHighBeta;
+import static com.sh.simpleeeg.CLS_BrainWave.iHighGamma;
+import static com.sh.simpleeeg.CLS_BrainWave.iLowAlpha;
+import static com.sh.simpleeeg.CLS_BrainWave.iLowBeta;
+import static com.sh.simpleeeg.CLS_BrainWave.iLowGamma;
+import static com.sh.simpleeeg.CLS_BrainWave.iMeditation;
+import static com.sh.simpleeeg.CLS_BrainWave.iTheta;
 
 //import com.bumptech.glide.request.Request;
 
@@ -89,19 +102,20 @@ public class Test extends Activity {
     private Handler m_clockHandler = new Handler();
     boolean bThreadRun = false;
     int iCountDownTimer = 100;
-    private int progress = 11;
+    static int progress = 11;//倒數計時及間
     private ProgressBar pb;
     private Timer timer;
     private TimerTask timerTask;
-    static int count = 11;//倒數計時及間
     static int level = 1;
     RequestOptions myGdiOptions = new RequestOptions().fitCenter();
 
+
     static double dX = 0;
-    static List<Integer> listRawData = new ArrayList<Integer>();
 
 
 
+
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @SuppressLint({"SourceLockedOrientationActivity", "ResourceType"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,9 +159,8 @@ public class Test extends Activity {
 
         float fSize = 10f;
 
-        //设置进度条的最大数值
+        //設置進度條的最大數值
         pb.setMax(10);
-        //一开始进度条的进度是0
         pb.setProgress(0);
 
 
@@ -155,22 +168,15 @@ public class Test extends Activity {
         clsData.DoRawCalculation();
 
 
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
 
 
-                mDlgNext = new Dialog(Test.this);
-                mDlgNext.setCancelable(false);
-                mDlgNext.setContentView(R.layout.dlg_next);
-                Button loginBtnNext = mDlgNext.findViewById(R.id.btnNext);
-                loginBtnNext.setOnClickListener(loginDlgBtnNextOnClick);
-                mDlgNext.show();
+                }
 
-            }
-
-        }, 11000);
+            }, 1000);
 
 
 
@@ -189,13 +195,18 @@ public class Test extends Activity {
 
 
 
-
-
-
-
-
     void setMusic(){
-        music.play(this, R.raw.calm01);
+        switch (level) {
+            case 2: //等級2=====
+                music.play(this, R.raw.calm01);
+                break;
+            case 3: //等級3=====
+                music.play(this, R.raw.passionate01);
+                break;
+            case 4: //等級4=====
+                music.play(this, R.raw.pop01);
+                break;
+        }
     }
 
 
@@ -240,6 +251,7 @@ public class Test extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        level=1;
         EndTimer();
         music.stop(this);
 
@@ -248,6 +260,7 @@ public class Test extends Activity {
     @Override
     public void finish() {
         music.stop(this);
+        level=1;
         super.finish();
     }
 
@@ -287,29 +300,75 @@ public class Test extends Activity {
     Handler handler = new Handler()
     {
         public void handleMessage(android.os.Message msg) {
-            if(msg.what==0) //如果消息是刚才发送的标识
+            if(msg.what==0)
             {
                 tvTime.setText(Integer.toString(progress));
+            }
+            if(msg.what==1)
+            {
+                tvTime.setText("時間到");
+            }
+        };
+    };
+    Handler handler2 = new Handler()
+    {
+        public void handleMessage(android.os.Message msg) {
+            if(msg.what==0)
+            {
+                mDlgNext = new Dialog(Test.this);
+                mDlgNext.setCancelable(false);
+                mDlgNext.setContentView(R.layout.dlg_next);
+                Button loginBtnNext = mDlgNext.findViewById(R.id.btnNext);
+                loginBtnNext.setOnClickListener(loginDlgBtnNextOnClick);
+                mDlgNext.show();
             }
         };
     };
 
+
     public void StartTimer() {
-        //如果timer和timerTask已经被置null了
+        //如果timer和timerTask已經被置null了
         if (timer == null&&timerTask==null) {
             //新建timer和timerTask
             timer = new Timer();
             timerTask = new TimerTask() {
                 @Override
                 public void run() {
-                    //每次progress加一
+                    Bundle bundle = getIntent().getExtras();
+                    String CheckRB = bundle.getString("CheckRB");
+                    float fCheckRB = Float.parseFloat(CheckRB);
+                    //每次progress減一
                     progress--;
                     handler.sendEmptyMessage(0);
-                    //如果进度条满了的话就再置0，实现循环
                     if (progress <= 0) {
-                        progress = 0;
+                        handler.sendEmptyMessage(1);
+                        clsData.SetLD = "True";
+                        clsData.SetBrainData(iGoodSignal, iAttention=-1, iMeditation=-1,iFatigue=-1, iDelta=-1, iTheta=-1,
+                                iLowAlpha=-1, iHighAlpha=-1, iLowBeta=-1, iHighBeta=-1, iLowGamma=-1, iHighGamma=-1);
+                        switch((int) fCheckRB){
+                            case 1 : Main.addSql2();break;
+                            case 2 : break;//CLS_DATA(Ctrl+F => LoadingData);
+                            case 3 : AddDataToSheets();break;
+                        }
+                        if(progress==0) {
+                            if(level<4)
+                            handler2.sendEmptyMessage(0);
+
+                        }
                     }
-                    //设置进度条进度
+                    else {
+                        clsData.SetLD = "False";
+                        clsData.SetBrainData(iGoodSignal, iAttention, iMeditation,iFatigue, iDelta, iTheta,
+                                iLowAlpha, iHighAlpha, iLowBeta, iHighBeta, iLowGamma, iHighGamma);
+                        switch ((int) fCheckRB){
+                            case 1 : Main.addSql2();break;
+                            case 2 : break;//CLS_DATA(Ctrl+F => LoadingData);
+                            case 3 : AddDataToSheets();break;
+                        }
+
+
+                    }
+                    //設置進度條進度
                     pb.setProgress(progress);
                 }
             };
@@ -320,6 +379,10 @@ public class Test extends Activity {
         }
     }
 
+    private void AddDataToSheets() {
+        new addDataToSheet().execute("https://script.google.com/macros/s/AKfycbyQ0RLFNohoVVE4O4T_eROfEp0evCgdO3hy4ojKeHrkOQ4tDjyK76SE5b9g9O6tXhC1/exec");
+    }
+
 
     public void EndTimer()
     {
@@ -327,7 +390,11 @@ public class Test extends Activity {
         timerTask.cancel();
         timer=null;
         timerTask=null;
+
     }
+
+
+
     private final View.OnClickListener loginDlgBtnNextOnClick = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -501,8 +568,7 @@ public class Test extends Activity {
                         animTxtMove.playSequentially(animTxtMove1);
                         animTxtMove.start();
                         break;
-                case 2 :  //等級2=====
-                        imgGhost.setAlpha(0f);
+                    case 2 :  //等級2=====
                         animTxtAlpha = ObjectAnimator.ofFloat(imgGhost, "alpha",0,0);
                         animTxtAlpha2 = ObjectAnimator.ofFloat(imgAudience, "alpha", 1, 1);
                         animTxtAlpha.setDuration(500);
@@ -523,7 +589,51 @@ public class Test extends Activity {
 
                         animTxtMove.playSequentially(animTxtMove2);
                         animTxtMove.start();
-                    break;
+                        break;
+                    case 3 :  //等級3=====
+                        animTxtAlpha = ObjectAnimator.ofFloat(imgGhost, "alpha",0,0);
+                        animTxtAlpha2 = ObjectAnimator.ofFloat(imgAudience, "alpha", 1, 1);
+                        animTxtAlpha.setDuration(500);
+                        animTxtAlpha.setRepeatCount(-1);
+                        animTxtAlpha.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha2.setDuration(500);
+                        animTxtAlpha2.setRepeatCount(-1);
+                        animTxtAlpha2.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha2.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha.start();
+                        animTxtAlpha2.start();
+
+                        ObjectAnimator animTxtMove3 =
+                                ObjectAnimator.ofFloat(imgAudience, "y", point1, point2);
+                        animTxtMove3.setDuration(900);
+                        animTxtMove3.setInterpolator(new AccelerateDecelerateInterpolator());
+
+                        animTxtMove.playSequentially(animTxtMove3);
+                        animTxtMove.start();
+                        break;
+                    case 4 :  //等級4=====
+                        animTxtAlpha = ObjectAnimator.ofFloat(imgGhost, "alpha",0,0);
+                        animTxtAlpha2 = ObjectAnimator.ofFloat(imgAudience, "alpha", 1, 1);
+                        animTxtAlpha.setDuration(500);
+                        animTxtAlpha.setRepeatCount(-1);
+                        animTxtAlpha.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha2.setDuration(500);
+                        animTxtAlpha2.setRepeatCount(-1);
+                        animTxtAlpha2.setRepeatMode(ObjectAnimator.REVERSE);
+                        animTxtAlpha2.setInterpolator(new LinearInterpolator());
+                        animTxtAlpha.start();
+                        animTxtAlpha2.start();
+
+                        ObjectAnimator animTxtMove4 =
+                                ObjectAnimator.ofFloat(imgAudience, "y", point1, point2);
+                        animTxtMove4.setDuration(900);
+                        animTxtMove4.setInterpolator(new AccelerateDecelerateInterpolator());
+
+                        animTxtMove.playSequentially(animTxtMove4);
+                        animTxtMove.start();
+                        break;
                 }
                 //=============================================================================
 
@@ -542,7 +652,21 @@ public class Test extends Activity {
                         }
                         break;
                     case 2 :  //等級2=====
-                        if (clsData.iGetMeditation() <= 60) {
+                        if (clsData.iGetMeditation() <= 70) {
+                            set2 = 700 + clsData.iGetMeditation() * 9;  //==遠離
+                        } else {
+                            set2 = 700;  //==靠近
+                        }
+                        break;
+                    case 3 :  //等級3=====
+                        if (clsData.iGetMeditation() <= 80) {
+                            set2 = 700 + clsData.iGetMeditation() * 9;  //==遠離
+                        } else {
+                            set2 = 700;  //==靠近
+                        }
+                        break;
+                    case 4 :  //等級4=====
+                        if (clsData.iGetMeditation() <= 90) {
                             set2 = 700 + clsData.iGetMeditation() * 9;  //==遠離
                         } else {
                             set2 = 700;  //==靠近
@@ -559,12 +683,12 @@ public class Test extends Activity {
 
                 clsLineChart.AddPoint(3, dX, clsData.iGetFatigue());
                 if (fCheckRB == 1){
-                    Main.addSql2();
+                    //Main.addSql2();
                 }
                 if (fCheckRB == 2){
                 }
                 if (fCheckRB == 3){
-                    new addDataToSheet().execute("https://script.google.com/macros/s/AKfycbyQ0RLFNohoVVE4O4T_eROfEp0evCgdO3hy4ojKeHrkOQ4tDjyK76SE5b9g9O6tXhC1/exec");
+                    //new addDataToSheet().execute("https://script.google.com/macros/s/AKfycbyQ0RLFNohoVVE4O4T_eROfEp0evCgdO3hy4ojKeHrkOQ4tDjyK76SE5b9g9O6tXhC1/exec");
                 }
                 viewLineChart.invalidate();
                 viewLineChart2.invalidate();

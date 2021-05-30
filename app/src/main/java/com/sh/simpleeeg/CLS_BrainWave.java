@@ -305,8 +305,8 @@ public class CLS_BrainWave
                     break;
                 case MindDataType.CODE_MEDITATION://packet 最後面的資料是放鬆
                     iMeditation = msg.arg1;
-                    clsData.SetBrainData(iGoodSignal, iAttention, iMeditation,iFatigue, iDelta, iTheta,
-                            iLowAlpha, iHighAlpha, iLowBeta, iHighBeta, iLowGamma, iHighGamma);
+                    /*clsData.SetBrainData(iGoodSignal, iAttention, iMeditation,iFatigue, iDelta, iTheta,
+                            iLowAlpha, iHighAlpha, iLowBeta, iHighBeta, iLowGamma, iHighGamma);*/
 
                     if(clsData.bTestReady())
                         m_Callback_Test.Do(S.BrainwaveValue, 0);
